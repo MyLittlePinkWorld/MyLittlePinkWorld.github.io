@@ -30,16 +30,16 @@
     }
   };
 
-  // Load the shared popup styling.
-  if (!document.querySelector('[data-achievement-styles]')) {
+  // Load the shared stylesheet.
+  if (!document.querySelector("[data-achievement-styles]")) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "achievements.css";
+    link.href = new URL("achievements.css", document.baseURI).href;
     link.dataset.achievementStyles = "true";
     document.head.appendChild(link);
   }
 
-  // Create the popup automatically on every page.
+  // Create the popup on every page.
   let popup = document.getElementById("achievementPopup");
 
   if (!popup) {
@@ -49,12 +49,11 @@
     popup.hidden = true;
     popup.setAttribute("role", "dialog");
     popup.setAttribute("aria-modal", "true");
-    popup.setAttribute("aria-labelledby", "achievementPopupTitle");
 
     popup.innerHTML = `
       <div class="achievement-popup-card">
         <div aria-hidden="true">✧･ﾟ: *✧･ﾟ:* ♡ *:･ﾟ✧*:･ﾟ✧</div>
-        <div id="achievementPopupIcon" class="achievement-popup-icon">🏆</div>
+        <div id="achievementPopupIcon" class="achievement-popup-icon"></div>
         <h2 id="achievementPopupTitle">Achievement unlocked!</h2>
         <p id="achievementPopupName"></p>
         <p id="achievementPopupDescription"></p>
@@ -84,7 +83,8 @@
         ? saved.pages.filter(page => pages.includes(page))
         : []
     };
-  } catch {
+  } catch (error) {
+    console.error("Could not read achievements:", error);
     data = {
       firstVisit: false,
       articleExplorer: false,
@@ -95,8 +95,10 @@
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
+      return true;
     } catch (error) {
-      console.warn("Achievements could not be saved.", error);
+      console.error("Could not save achievements:", error);
+      return false;
     }
   }
 
@@ -110,17 +112,15 @@
     let collected = 0;
 
     earned.forEach(([id, unlocked]) => {
+      if (unlocked) collected++;
+
       const card = document.getElementById("card-" + id);
       const status = document.getElementById("status-" + id);
-
-      if (unlocked) collected++;
 
       if (card) card.classList.toggle("locked", !unlocked);
 
       if (status) {
-        status.textContent = unlocked
-          ? "✓ Collected ♡"
-          : "🔒 Locked";
+        status.textContent = unlocked ? "✓ Collected ♡" : "🔒 Locked";
       }
     });
 
@@ -159,10 +159,6 @@
     }
 
     const badge = info[queue.shift()];
-    if (!badge) {
-      showNext();
-      return;
-    }
 
     icon.textContent = badge.icon;
     name.textContent = badge.name;
@@ -170,7 +166,6 @@
 
     popup.hidden = false;
     popupOpen = true;
-    closeButton.focus();
   }
 
   function closePopup() {
@@ -192,7 +187,7 @@
   });
 
   const currentPage =
-    location.pathname.split("/").pop() || "index.html";
+    location.pathname.split("/").filter(Boolean).pop() || "index.html";
 
   const newlyEarned = [];
 
@@ -232,27 +227,18 @@
     resetButton.addEventListener("click", function () {
       if (!window.confirm("Reset all your little badges? ♡")) return;
 
-      try {
-        localStorage.removeItem(KEY);
+      data = {
+        firstVisit: true,
+        articleExplorer: false,
+        pages: ["achievements.html"]
+      };
 
-        data = {
-          firstVisit: true,
-          articleExplorer: false,
-          pages: ["achievements.html"]
-        };
+      save();
+      render();
 
-        save();
-        render();
-
-        const message = document.getElementById("resetMessage");
-        if (message) {
-          message.textContent = "Your badges have been reset ♡";
-        }
-      } catch {
-        const message = document.getElementById("resetMessage");
-        if (message) {
-          message.textContent = "Could not reset badges. Please try again.";
-        }
+      const message = document.getElementById("resetMessage");
+      if (message) {
+        message.textContent = "Your badges have been reset ♡";
       }
     });
   }
