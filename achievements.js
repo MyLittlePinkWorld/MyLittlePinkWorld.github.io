@@ -32,7 +32,7 @@
     }
   };
 
-  // Load the popup stylesheet.
+  // Load the stylesheet.
   if (!document.querySelector("[data-achievement-styles]")) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -41,7 +41,7 @@
     document.head.appendChild(link);
   }
 
-  // Create the popup if it does not already exist.
+  // Create the popup.
   let popup = document.getElementById("achievementPopup");
 
   if (!popup) {
@@ -91,12 +91,7 @@
       };
     } catch (error) {
       console.error("Could not read achievements:", error);
-
-      return {
-        firstVisit: false,
-        articleExplorer: false,
-        pages: []
-      };
+      return { firstVisit: false, articleExplorer: false, pages: [] };
     }
   }
 
@@ -126,7 +121,6 @@
       const status = document.getElementById("status-" + id);
 
       if (earned) collected++;
-
       if (card) card.classList.toggle("locked", !earned);
 
       if (status) {
@@ -158,7 +152,7 @@
     }
   }
 
-  // Queue popups so each newly earned badge gets its own popup.
+  // Queue popups.
   let queue = [];
   let popupOpen = false;
 
@@ -170,9 +164,7 @@
       return;
     }
 
-    const badgeId = queue.shift();
-    const badge = info[badgeId];
-
+    const badge = info[queue.shift()];
     if (!badge) {
       showNext();
       return;
@@ -181,14 +173,12 @@
     icon.textContent = badge.icon;
     name.textContent = badge.name;
     description.textContent = badge.description;
-
     popup.hidden = false;
     popupOpen = true;
   }
 
   function closePopup() {
     if (!popupOpen) return;
-
     popup.hidden = true;
     popupOpen = false;
     showNext();
@@ -204,7 +194,7 @@
     if (event.key === "Escape") closePopup();
   });
 
-  // Register the current page and newly earned badges.
+  // Track the current page.
   const currentPage =
     location.pathname.split("/").filter(Boolean).pop() || "index.html";
 
@@ -221,20 +211,16 @@
       newlyEarned.push("articles");
     }
 
-  const alreadyHadExplorer = data.pages.length >= 3;
+    const alreadyHadExplorer = data.pages.length >= 3;
 
-if (!data.pages.includes(currentPage)) {
-  data.pages.push(currentPage);
-}
+    if (!data.pages.includes(currentPage)) {
+      data.pages.push(currentPage);
+    }
 
-if (
-  !alreadyHadExplorer &&
-  data.pages.length >= 3 &&
-  !newlyEarned.includes("explorer")
-) {
-  newlyEarned.push("explorer");
-}
-  
+    if (!alreadyHadExplorer && data.pages.length >= 3) {
+      newlyEarned.push("explorer");
+    }
+  }
 
   saveData();
   render();
@@ -244,7 +230,7 @@ if (
     showNext();
   }
 
-  // Reset all badges. They can be earned again on later visits.
+  // Reset badges.
   const resetButton = document.getElementById("resetButton");
 
   if (resetButton) {
@@ -257,17 +243,23 @@ if (
         pages: []
       };
 
+      queue = [];
+      popupOpen = false;
+      popup.hidden = true;
+
       if (saveData()) {
         render();
 
         const message = document.getElementById("resetMessage");
         if (message) {
-          message.textContent = "Badges reset! Visit pages to earn them again ♡";
+          message.textContent =
+            "Badges reset! Visit pages to earn them again ♡";
         }
       } else {
         const message = document.getElementById("resetMessage");
         if (message) {
-          message.textContent = "Could not save the reset. Please check browser settings.";
+          message.textContent =
+            "Could not save the reset. Please check browser settings.";
         }
       }
     });
