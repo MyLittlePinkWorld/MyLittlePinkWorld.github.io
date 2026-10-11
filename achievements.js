@@ -1,5 +1,7 @@
 
 (function () {
+  "use strict";
+
   const KEY = "mlpwAchievementsV1";
 
   const pages = [
@@ -30,7 +32,7 @@
     }
   };
 
-  // Load the shared stylesheet.
+  // Load the popup stylesheet.
   if (!document.querySelector("[data-achievement-styles]")) {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -39,7 +41,7 @@
     document.head.appendChild(link);
   }
 
-  // Create the popup on every page.
+  // Create the popup if it does not already exist.
   let popup = document.getElementById("achievementPopup");
 
   if (!popup) {
@@ -71,28 +73,36 @@
   const description = document.getElementById("achievementPopupDescription");
   const closeButton = document.getElementById("achievementPopupClose");
 
-  let data;
-
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
-
-    data = {
-      firstVisit: saved.firstVisit === true,
-      articleExplorer: saved.articleExplorer === true,
-      pages: Array.isArray(saved.pages)
-        ? saved.pages.filter(page => pages.includes(page))
-        : []
-    };
-  } catch (error) {
-    console.error("Could not read achievements:", error);
-    data = {
-      firstVisit: false,
-      articleExplorer: false,
-      pages: []
-    };
+  if (!icon || !name || !description || !closeButton) {
+    console.error("Achievement popup elements are missing.");
+    return;
   }
 
-  function save() {
+  function readData() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+
+      return {
+        firstVisit: saved.firstVisit === true,
+        articleExplorer: saved.articleExplorer === true,
+        pages: Array.isArray(saved.pages)
+          ? [...new Set(saved.pages.filter(page => pages.includes(page)))]
+          : []
+      };
+    } catch (error) {
+      console.error("Could not read achievements:", error);
+
+      return {
+        firstVisit: false,
+        articleExplorer: false,
+        pages: []
+      };
+    }
+  }
+
+  let data = readData();
+
+  function saveData() {
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
       return true;
@@ -103,7 +113,7 @@
   }
 
   function render() {
-    const earned = [
+    const badges = [
       ["first", data.firstVisit],
       ["articles", data.articleExplorer],
       ["explorer", data.pages.length >= 3]
@@ -111,16 +121,16 @@
 
     let collected = 0;
 
-    earned.forEach(([id, unlocked]) => {
-      if (unlocked) collected++;
-
+    badges.forEach(([id, earned]) => {
       const card = document.getElementById("card-" + id);
       const status = document.getElementById("status-" + id);
 
-      if (card) card.classList.toggle("locked", !unlocked);
+      if (earned) collected++;
+
+      if (card) card.classList.toggle("locked", !earned);
 
       if (status) {
-        status.textContent = unlocked ? "✓ Collected ♡" : "🔒 Locked";
+        status.textContent = earned ? "✓ Collected ♡" : "🔒 Locked";
       }
     });
 
@@ -148,33 +158,33 @@
     }
   }
 
+  // Queue popups so each newly earned badge gets its own popup.
   let queue = [];
   let popupOpen = false;
 
-  
-function showNext() {
-  if (queue.length === 0) {
-    popup.hidden = true;
-    popupOpen = false;
-    return;
+  function showNext() {
+    if (popupOpen) return;
+
+    if (queue.length === 0) {
+      popup.hidden = true;
+      return;
+    }
+
+    const badgeId = queue.shift();
+    const badge = info[badgeId];
+
+    if (!badge) {
+      showNext();
+      return;
+    }
+
+    icon.textContent = badge.icon;
+    name.textContent = badge.name;
+    description.textContent = badge.description;
+
+    popup.hidden = false;
+    popupOpen = true;
   }
-
-  const badgeId = queue.shift();
-  const badge = info[badgeId];
-
-  if (!badge) {
-    showNext();
-    return;
-  }
-
-  icon.textContent = badge.icon;
-  name.textContent = badge.name;
-  description.textContent = badge.description;
-
-  popup.hidden = false;
-  popupOpen = true;
-}
-
 
   function closePopup() {
     if (!popupOpen) return;
@@ -194,6 +204,7 @@ function showNext() {
     if (event.key === "Escape") closePopup();
   });
 
+  // Register the current page and newly earned badges.
   const currentPage =
     location.pathname.split("/").filter(Boolean).pop() || "index.html";
 
@@ -210,25 +221,26 @@ function showNext() {
       newlyEarned.push("articles");
     }
 
-    const hadExplorer = data.pages.length >= 3;
+    const alreadyHadExplorer = data.pages.length >= 3;
 
     if (!data.pages.includes(currentPage)) {
       data.pages.push(currentPage);
     }
 
-    if (!hadExplorer && data.pages.length >= 3) {
+    if (!alreadyHadExplorer && data.pages.length >= 3) {
       newlyEarned.push("explorer");
     }
   }
 
-  save();
+  saveData();
   render();
 
-  if (newlyEarned.length) {
-    queue = newlyEarned;
+  if (newlyEarned.length > 0) {
+    queue.push(...newlyEarned);
     showNext();
   }
 
+  // Reset all badges. They can be earned again on later visits.
   const resetButton = document.getElementById("resetButton");
 
   if (resetButton) {
@@ -236,17 +248,23 @@ function showNext() {
       if (!window.confirm("Reset all your little badges? ♡")) return;
 
       data = {
-        firstVisit: true,
+        firstVisit: false,
         articleExplorer: false,
-        pages: ["achievements.html"]
+        pages: []
       };
 
-      save();
-      render();
+      if (saveData()) {
+        render();
 
-      const message = document.getElementById("resetMessage");
-      if (message) {
-        message.textContent = "Your badges have been reset ♡";
+        const message = document.getElementById("resetMessage");
+        if (message) {
+          message.textContent = "Badges reset! Visit pages to earn them again ♡";
+        }
+      } else {
+        const message = document.getElementById("resetMessage");
+        if (message) {
+          message.textContent = "Could not save the reset. Please check browser settings.";
+        }
       }
     });
   }
