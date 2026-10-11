@@ -897,41 +897,7 @@ backToTop.addEventListener("click", function () {
 updateBackToTop();
 </script>
 
-<script>
-(function () {
-  const KEY = "mlpwAchievementsV1";
-  const trackedPages = [
-    "index.html",
-    "blog.html",
-    "articles.html",
-    "about.html",
-    "links.html",
-    "guestbook.html",
-    "achievements.html"
-  ];
 
-  const currentPage = location.pathname.split("/").pop() || "index.html";
-
-  try {
-    const data = JSON.parse(localStorage.getItem(KEY) || "{}");
-
-    data.pages = Array.isArray(data.pages) ? data.pages : [];
-
-    if (trackedPages.includes(currentPage) &&
-        !data.pages.includes(currentPage)) {
-      data.pages.push(currentPage);
-    }
-
-    if (currentPage === "articles.html") {
-      data.articleExplorer = true;
-    }
-
-    localStorage.setItem(KEY, JSON.stringify(data));
-  } catch (error) {
-    console.warn("Achievements could not be saved.", error);
-  }
-})();
-</script>
 <script src="achievements.js"></script>
 </body>
 </html>
