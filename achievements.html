@@ -21,7 +21,9 @@
       --line: #f2c6d4;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -46,7 +48,9 @@
       margin: 0 0 8px;
     }
 
-    header p { line-height: 1.8; }
+    header p {
+      line-height: 1.8;
+    }
 
     nav {
       display: flex;
@@ -68,7 +72,9 @@
       cursor: pointer;
     }
 
-    nav a:hover, .button:hover { background: var(--pale); }
+    nav a:hover, .button:hover {
+      background: var(--pale);
+    }
 
     main {
       width: min(900px, calc(100% - 28px));
@@ -88,7 +94,9 @@
       margin-bottom: 20px;
     }
 
-    .intro h2, .progress-card h2 { margin-top: 0; }
+    .intro h2, .progress-card h2 {
+      margin-top: 0;
+    }
 
     .progress-track {
       height: 12px;
@@ -129,7 +137,9 @@
       font-size: 36px;
     }
 
-    .achievement h3 { margin: 8px 0; }
+    .achievement h3 {
+      margin: 8px 0;
+    }
 
     .achievement p {
       font-size: 13px;
@@ -178,79 +188,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition: none !important; }
+      *, *::before, *::after {
+        transition: none !important;
+      }
     }
-    
-/* ♡ Achievement unlocked popup */
-.achievement-popup {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(114, 53, 83, 0.45);
-  backdrop-filter: blur(5px);
-}
-
-.achievement-popup[hidden] {
-  display: none;
-}
-
-.achievement-popup-card {
-  width: min(380px, 100%);
-  padding: 30px 22px;
-  text-align: center;
-  background: #fff8fc;
-  border: 2px solid #f2c6d4;
-  border-radius: 26px;
-  box-shadow: 0 12px 45px #a85d7833;
-  animation: achievementPop .35s ease-out;
-}
-
-.achievement-popup-icon {
-  font-size: 58px;
-  margin: 12px 0;
-}
-
-.achievement-popup-card h2 {
-  margin: 8px 0;
-  color: #a85d78;
-}
-
-.achievement-popup-card p {
-  line-height: 1.7;
-}
-
-.achievement-popup-card button {
-  margin-top: 12px;
-  padding: 12px 22px;
-  border: 0;
-  border-radius: 20px;
-  background: #e88eae;
-  color: white;
-  font: inherit;
-  cursor: pointer;
-}
-
-@keyframes achievementPop {
-  from {
-    opacity: 0;
-    transform: scale(.85) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .achievement-popup-card {
-    animation: none;
-  }
-}
-
   </style>
 </head>
 
@@ -264,8 +205,9 @@
       <a href="blog.html">♡ Blog</a>
       <a href="articles.html">♡ Articles</a>
       <a href="about.html">♡ About Me</a>
+      <a href="links.html">♡ Links</a>
       <a href="guestbook.html">♡ Guestbook</a>
-      <a href="achievements.html">♡ Achievements</a>
+      <a href="achievements.html" aria-current="page">♡ Achievements</a>
     </nav>
   </header>
 
@@ -277,7 +219,11 @@
 
     <section class="progress-card">
       <h2>your progress ♡</h2>
-      <p id="progressText" aria-live="polite">0 of 3 badges collected</p>
+
+      <p id="progressText" aria-live="polite">
+        0 of 3 badges collected
+      </p>
+
       <div
         class="progress-track"
         id="progressTrack"
@@ -289,30 +235,35 @@
       >
         <div id="progressFill"></div>
       </div>
-      <p id="progressMessage">Your little adventure starts here ♡</p>
+
+      <p id="progressMessage">
+        Your little adventure starts here ♡
+      </p>
     </section>
 
     <section class="achievement-grid" aria-label="Your achievements">
-      <article class="achievement" id="card-first">
-        <div class="badge-icon">💗</div>
+
+      <article class="achievement locked" id="card-first">
+        <div class="badge-icon">🌸</div>
         <h3>First Visit</h3>
-        <p>Visit your achievements page to collect your first badge.</p>
-        <div class="status" id="status-first">♡ Not collected yet</div>
+        <p>Visit My Little Pink World to collect your first badge.</p>
+        <div class="status" id="status-first">🔒 Locked</div>
       </article>
 
       <article class="achievement locked" id="card-articles">
-        <div class="badge-icon">📖</div>
+        <div class="badge-icon">📚</div>
         <h3>Article Explorer</h3>
         <p>Discover the articles page of My Little Pink World.</p>
         <div class="status" id="status-articles">🔒 Locked</div>
       </article>
 
       <article class="achievement locked" id="card-explorer">
-        <div class="badge-icon">🧭</div>
+        <div class="badge-icon">🗺️</div>
         <h3>Little Explorer</h3>
         <p>Visit three different tracked pages on the website.</p>
         <div class="status" id="status-explorer">🔒 Locked</div>
       </article>
+
     </section>
 
     <aside class="notice">
@@ -323,27 +274,24 @@
 
     <div class="actions">
       <p>Keep exploring, lovely visitor! 🎀</p>
+
       <button class="button reset" id="resetButton" type="button">
         Reset my badges ♡
       </button>
+
       <p id="resetMessage" aria-live="polite"></p>
     </div>
   </main>
 
   <footer>
     made with ♡ & pink sparkles · my little pink world
-    <p><a href="privacy.html" style="color:#a85d78;">privacy policy ♡</a></p>
+    <p>
+      <a href="privacy.html" style="color:#a85d78;">
+        privacy policy ♡
+      </a>
+    </p>
   </footer>
 
-
-<div
-  id="achievementPopup"
-  class="achievement-popup"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="achievementPopupTitle"
-  hidden
->
-<script src="achievements.js"></script>
+  <script src="achievements.js"></script>
 </body>
 </html>
