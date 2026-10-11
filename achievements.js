@@ -151,22 +151,30 @@
   let queue = [];
   let popupOpen = false;
 
-  function showNext() {
-    if (!queue.length) {
-      popup.hidden = true;
-      popupOpen = false;
-      return;
-    }
-
-    const badge = info[queue.shift()];
-
-    icon.textContent = badge.icon;
-    name.textContent = badge.name;
-    description.textContent = badge.description;
-
-    popup.hidden = false;
-    popupOpen = true;
+  
+function showNext() {
+  if (queue.length === 0) {
+    popup.hidden = true;
+    popupOpen = false;
+    return;
   }
+
+  const badgeId = queue.shift();
+  const badge = info[badgeId];
+
+  if (!badge) {
+    showNext();
+    return;
+  }
+
+  icon.textContent = badge.icon;
+  name.textContent = badge.name;
+  description.textContent = badge.description;
+
+  popup.hidden = false;
+  popupOpen = true;
+}
+
 
   function closePopup() {
     if (!popupOpen) return;
