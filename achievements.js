@@ -221,16 +221,20 @@
       newlyEarned.push("articles");
     }
 
-    const alreadyHadExplorer = data.pages.length >= 3;
+  const alreadyHadExplorer = data.pages.length >= 3;
 
-    if (!data.pages.includes(currentPage)) {
-      data.pages.push(currentPage);
-    }
+if (!data.pages.includes(currentPage)) {
+  data.pages.push(currentPage);
+}
 
-    if (!alreadyHadExplorer && data.pages.length >= 3) {
-      newlyEarned.push("explorer");
-    }
-  }
+if (
+  !alreadyHadExplorer &&
+  data.pages.length >= 3 &&
+  !newlyEarned.includes("explorer")
+) {
+  newlyEarned.push("explorer");
+}
+  
 
   saveData();
   render();
