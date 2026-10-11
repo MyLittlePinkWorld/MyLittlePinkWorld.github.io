@@ -30,77 +30,98 @@
     }
   };
 
+  // Load the shared popup styling.
+  if (!document.querySelector('[data-achievement-styles]')) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "achievements.css";
+    link.dataset.achievementStyles = "true";
+    document.head.appendChild(link);
+  }
+
+  // Create the popup automatically on every page.
+  let popup = document.getElementById("achievementPopup");
+
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "achievementPopup";
+    popup.className = "achievement-popup";
+    popup.hidden = true;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    popup.setAttribute("aria-labelledby", "achievementPopupTitle");
+
+    popup.innerHTML = `
+      <div class="achievement-popup-card">
+        <div aria-hidden="true">✧･ﾟ: *✧･ﾟ:* ♡ *:･ﾟ✧*:･ﾟ✧</div>
+        <div id="achievementPopupIcon" class="achievement-popup-icon">🏆</div>
+        <h2 id="achievementPopupTitle">Achievement unlocked!</h2>
+        <p id="achievementPopupName"></p>
+        <p id="achievementPopupDescription"></p>
+        <button id="achievementPopupClose" type="button">
+          yay, thank you! ♡
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+  }
+
+  const icon = document.getElementById("achievementPopupIcon");
+  const name = document.getElementById("achievementPopupName");
+  const description = document.getElementById("achievementPopupDescription");
+  const closeButton = document.getElementById("achievementPopupClose");
+
   let data;
 
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+
     data = {
       firstVisit: saved.firstVisit === true,
       articleExplorer: saved.articleExplorer === true,
       pages: Array.isArray(saved.pages)
-        ? saved.pages.filter(p => pages.includes(p))
+        ? saved.pages.filter(page => pages.includes(page))
         : []
     };
   } catch {
-    data = { firstVisit: false, articleExplorer: false, pages: [] };
+    data = {
+      firstVisit: false,
+      articleExplorer: false,
+      pages: []
+    };
   }
 
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
-    } catch {}
-  }
-
-  const currentPage =
-    location.pathname.split("/").pop() || "index.html";
-
-  const unlocked = [];
-
-  if (pages.includes(currentPage)) {
-    if (!data.firstVisit) {
-      data.firstVisit = true;
-      unlocked.push("first");
-    }
-
-    if (currentPage === "articles.html" && !data.articleExplorer) {
-      data.articleExplorer = true;
-      unlocked.push("articles");
-    }
-
-    const hadExplorer = data.pages.length >= 3;
-
-    if (!data.pages.includes(currentPage)) {
-      data.pages.push(currentPage);
-    }
-
-    if (!hadExplorer && data.pages.length >= 3) {
-      unlocked.push("explorer");
+    } catch (error) {
+      console.warn("Achievements could not be saved.", error);
     }
   }
 
-  save();
-
-  // Update the badge cards on achievements.html, if present.
   function render() {
-    const explorer = data.pages.length >= 3;
-    const badges = [
+    const earned = [
       ["first", data.firstVisit],
       ["articles", data.articleExplorer],
-      ["explorer", explorer]
+      ["explorer", data.pages.length >= 3]
     ];
 
     let collected = 0;
 
-    badges.forEach(([id, earned]) => {
+    earned.forEach(([id, unlocked]) => {
       const card = document.getElementById("card-" + id);
       const status = document.getElementById("status-" + id);
 
-      if (!card || !status) return;
+      if (unlocked) collected++;
 
-      card.classList.toggle("locked", !earned);
-      status.textContent = earned ? "✓ Collected ♡" : "🔒 Locked";
+      if (card) card.classList.toggle("locked", !unlocked);
 
-      if (earned) collected++;
+      if (status) {
+        status.textContent = unlocked
+          ? "✓ Collected ♡"
+          : "🔒 Locked";
+      }
     });
 
     const progressText = document.getElementById("progressText");
@@ -127,51 +148,84 @@
     }
   }
 
-  render();
+  let queue = [];
+  let popupOpen = false;
 
-  // Show achievement popups on whichever page earned them.
-  const popup = document.getElementById("achievementPopup");
-  const closeButton = document.getElementById("achievementPopupClose");
-
-  if (popup && closeButton && unlocked.length) {
-    let next = 0;
-
-    function showNext() {
-      if (next >= unlocked.length) {
-        popup.hidden = true;
-        return;
-      }
-
-      const badge = info[unlocked[next]];
-      document.getElementById("achievementPopupIcon").textContent = badge.icon;
-      document.getElementById("achievementPopupName").textContent = badge.name;
-      document.getElementById("achievementPopupDescription").textContent =
-        badge.description;
-
-      popup.hidden = false;
-      closeButton.focus();
-    }
-
-    function closePopup() {
+  function showNext() {
+    if (!queue.length) {
       popup.hidden = true;
-      next++;
-      showNext();
+      popupOpen = false;
+      return;
     }
 
-    closeButton.addEventListener("click", closePopup);
+    const badge = info[queue.shift()];
+    if (!badge) {
+      showNext();
+      return;
+    }
 
-    popup.addEventListener("click", function (event) {
-      if (event.target === popup) closePopup();
-    });
+    icon.textContent = badge.icon;
+    name.textContent = badge.name;
+    description.textContent = badge.description;
 
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && !popup.hidden) closePopup();
-    });
+    popup.hidden = false;
+    popupOpen = true;
+    closeButton.focus();
+  }
 
+  function closePopup() {
+    if (!popupOpen) return;
+
+    popup.hidden = true;
+    popupOpen = false;
     showNext();
   }
 
-  // Reset button exists only on the achievements page.
+  closeButton.addEventListener("click", closePopup);
+
+  popup.addEventListener("click", function (event) {
+    if (event.target === popup) closePopup();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closePopup();
+  });
+
+  const currentPage =
+    location.pathname.split("/").pop() || "index.html";
+
+  const newlyEarned = [];
+
+  if (pages.includes(currentPage)) {
+    if (!data.firstVisit) {
+      data.firstVisit = true;
+      newlyEarned.push("first");
+    }
+
+    if (currentPage === "articles.html" && !data.articleExplorer) {
+      data.articleExplorer = true;
+      newlyEarned.push("articles");
+    }
+
+    const hadExplorer = data.pages.length >= 3;
+
+    if (!data.pages.includes(currentPage)) {
+      data.pages.push(currentPage);
+    }
+
+    if (!hadExplorer && data.pages.length >= 3) {
+      newlyEarned.push("explorer");
+    }
+  }
+
+  save();
+  render();
+
+  if (newlyEarned.length) {
+    queue = newlyEarned;
+    showNext();
+  }
+
   const resetButton = document.getElementById("resetButton");
 
   if (resetButton) {
@@ -180,19 +234,25 @@
 
       try {
         localStorage.removeItem(KEY);
+
         data = {
           firstVisit: true,
           articleExplorer: false,
           pages: ["achievements.html"]
         };
+
         save();
         render();
 
         const message = document.getElementById("resetMessage");
-        if (message) message.textContent = "Your badges have been reset ♡";
+        if (message) {
+          message.textContent = "Your badges have been reset ♡";
+        }
       } catch {
         const message = document.getElementById("resetMessage");
-        if (message) message.textContent = "Could not reset badges. Please try again.";
+        if (message) {
+          message.textContent = "Could not reset badges. Please try again.";
+        }
       }
     });
   }
