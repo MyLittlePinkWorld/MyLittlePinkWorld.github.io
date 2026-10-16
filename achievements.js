@@ -234,6 +234,7 @@
 
     if (!data.pages.includes(currentPage)) {
       data.pages.push(currentPage);
+      console.log("Bezochte pagina's:", data.pages);
     }
 
     if (!alreadyHadExplorer && data.pages.length >= 3) {
