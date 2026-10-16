@@ -237,10 +237,10 @@
       console.log("Bezochte pagina's:", data.pages);
     }
 
-    if (!alreadyHadExplorer && data.pages.length >= 3) {
-      data.explorer = true;
-      newlyEarned.push("explorer");
-    }
+   if (!alreadyHadExplorer && data.pages.length >= 3) {
+  data.explorer = true;
+  newlyEarned.push("explorer");
+}
   }
 
   saveData();
